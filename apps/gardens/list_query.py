@@ -1,4 +1,4 @@
-# 本应共用；埋点里 views 故意不用这些正确函数
+# 整页视图与 HTMX 局部片段共用的查询/排序入口，保证刷新前后行集合一致
 from .models import Trough, WitherBatch
 
 
