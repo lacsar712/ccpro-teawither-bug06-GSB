@@ -13,6 +13,7 @@ from django.views.generic import (
 )
 
 from .forms import GardenForm, TroughForm, WitherBatchForm
+from .list_query import build_batch_queryset, build_trough_queryset
 from .models import Garden, Trough, WitherBatch
 
 
@@ -101,22 +102,18 @@ class TroughListView(LoginRequiredMixin, ListView):
     context_object_name = "troughs"
 
     def get_queryset(self):
-        # 整页：带 garden，按园+槽号
-        return Trough.objects.select_related("garden").order_by(
-            "garden__name", "troughCode"
-        )
+        # 整页与 HTMX 片段共用同一套查询与排序
+        return build_trough_queryset(self.request)
 
     def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
         if _wants_htmx(request):
-            # BUG: HTMX 不 select_related，且按 id 倒序，集合/顺序与整页不同
-            qs = Trough.objects.all().order_by("-id")
             html = render_to_string(
                 "troughs/_table.html",
-                {"troughs": qs},
+                {"troughs": self.object_list},
                 request=request,
             )
             return HttpResponse(html)
-        self.object_list = self.get_queryset()
         return super().get(request, *args, **kwargs)
 
 
@@ -161,21 +158,18 @@ class BatchListView(LoginRequiredMixin, ListView):
     context_object_name = "batches"
 
     def get_queryset(self):
-        return WitherBatch.objects.select_related("trough", "trough__garden").order_by(
-            "-startedAt", "-id"
-        )
+        # 整页与 HTMX 片段共用同一套查询与排序
+        return build_batch_queryset(self.request)
 
     def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
         if _wants_htmx(request):
-            # BUG: 批次 HTMX 同样分叉
-            qs = WitherBatch.objects.all().order_by("id")
             html = render_to_string(
                 "batches/_table.html",
-                {"batches": qs},
+                {"batches": self.object_list},
                 request=request,
             )
             return HttpResponse(html)
-        self.object_list = self.get_queryset()
         return super().get(request, *args, **kwargs)
 
 

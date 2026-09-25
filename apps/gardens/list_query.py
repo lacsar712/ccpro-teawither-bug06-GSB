@@ -1,4 +1,4 @@
-# 本应共用；埋点里 views 故意不用这些正确函数
+# 整页与 HTMX 局部片段共用的列表查询与排序函数
 from .models import Trough, WitherBatch
 
 
